@@ -24,6 +24,7 @@ run_analysis <- function(n = -1) {
         f <- sub("Gyro", ".Gyroscope.", f)
         f <- sub("Mag", "Magnitude.", f)
         f <- sub("Jerk", "Jerk.", f)
+        f <- sub("BodyBody", "Body", f)
         f <- sub("\\-mean\\(\\)", "Mean", f)
         f <- sub("\\-std\\(\\)", "Standard.Deviation", f)
         gsub("\\-", ".", f)
@@ -116,16 +117,16 @@ run_analysis <- function(n = -1) {
     averages <- c()
 
     ## Iterate on each activity, subject and feature
-    for (a in levels(allData$Activity)) {
-        for (s in levels(allData$Subject)) {
-            for (f in features[featuresMeanStd]) {
+    for (a in sort(levels(allData$Activity))) {
+        for (s in sort(levels(allData$Subject))) {
+            for (f in sort(features[featuresMeanStd])) {
                 ## Select the records that match the activity and subject
                 selectedRecords <- allData[allData$Subject == s & allData$Activity == a, ]
 
                 ## save the selection criteria in each component
-                activities <- c(activities, a)
-                subjects <- c(subjects, s)
-                measures <- c(measures, f)
+                activities <- c(activities, gsub("_", " ", a))
+                subjects <- c(subjects, as.numeric(s))
+                measures <- c(measures, gsub("\\.", " ", f))
 
                 ## save the average of the feature in its own component
                 averages <- c(averages, mean(selectedRecords[, f]))
@@ -134,5 +135,5 @@ run_analysis <- function(n = -1) {
     }
 
     ## Generate the resulting data frame, from the selected/calculated data
-    data.frame(Activity = activities, Subject = subjects, Measure = measures, Average = averages)
+    write.csv(data.frame(Activity = activities, Subject = subjects, Measure = measures, Average = averages), "tidy_measures.csv", row.names = FALSE)
 }
