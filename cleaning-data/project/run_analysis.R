@@ -1,4 +1,4 @@
-run_analysis <- function(n = -1) {
+run_analysis <- function() {
 
     ## ------------------------------------
     ## Part 1: Loading and tidying features
@@ -56,20 +56,20 @@ run_analysis <- function(n = -1) {
     ## Load the train/subject_train.txt file into "Subject" to have the list of subjects per train record
     ## It has a single value per line, so it's possible to get a vector of them by using function "readLines"
     conSubjectTrain <- file("UCI_HAR_Dataset/train/subject_train.txt")
-    Subject <- readLines(conSubjectTrain, n = n)
+    Subject <- readLines(conSubjectTrain)
     close(conSubjectTrain)
 
     ## Load the train/y_train.txt file into "Activity" to have the list of activities per train record
     ## It has a single value per line, so it's possible to get a vector of them by using function "readLines"
     ## Use the activities vector to translate the activity numbers into their correspondent labels
     conTrainY <- file("UCI_HAR_Dataset/train/y_train.txt")
-    Activity <- readLines(conTrainY, n = n)
+    Activity <- readLines(conTrainY)
     Activity <- as.character(lapply(Activity, function(x) { activities[as.numeric(x)] }))
     close(conTrainY)
 
     ## Load the train/X_train.txt file into a data frame, selecting features data using the widths vector and naming the columns according to features/featuresMeanStd vectors
     ## Bind the Subject and Activity vectors as columns, as they are additional data about the records read into the data frame
-    dfTrain <- read.fwf("UCI_HAR_Dataset/train/X_train.txt", widths = widths, col.names = features[featuresMeanStd], header = FALSE, n = n)
+    dfTrain <- read.fwf("UCI_HAR_Dataset/train/X_train.txt", widths = widths, col.names = features[featuresMeanStd], header = FALSE)
     dfTrain <- cbind(dfTrain, Activity)
     dfTrain <- cbind(dfTrain, Subject)
 
@@ -80,20 +80,20 @@ run_analysis <- function(n = -1) {
     ## Load the test/subject_test.txt file into "Subject" to have the list of subjects per test record
     ## It has a single value per line, so it's possible to get a vector of them by using function "readLines"
     conSubjectTest <- file("UCI_HAR_Dataset/test/subject_test.txt")
-    Subject <- readLines(conSubjectTest, n = n)
+    Subject <- readLines(conSubjectTest)
     close(conSubjectTest)
 
     ## Load the test/y_test.txt file into "Activity" to have the list of activities per test record
     ## It has a single value per line, so it's possible to get a vector of them by using function "readLines"
     ## Use the activities vector to translate the activity numbers into their correspondent labels
     conTestY <- file("UCI_HAR_Dataset/test/y_test.txt")
-    Activity <- readLines(conTestY, n = n)
+    Activity <- readLines(conTestY)
     Activity <- as.character(lapply(Activity, function(x) { activities[as.numeric(x)] }))
     close(conTestY)
 
     ## Load the test/X_test.txt file into a data frame, selecting features data using the widths vector and naming the columns according to features/featuresMeanStd vectors
     ## Bind the Subject and Activity vectors as columns, as they are additional data about the records read into the data frame
-    dfTest <- read.fwf("UCI_HAR_Dataset/test/X_test.txt", widths = widths, col.names = features[featuresMeanStd], header = FALSE, n = n)
+    dfTest <- read.fwf("UCI_HAR_Dataset/test/X_test.txt", widths = widths, col.names = features[featuresMeanStd], header = FALSE)
     dfTest <- cbind(dfTest, Activity)
     dfTest <- cbind(dfTest, Subject)
 
@@ -118,14 +118,14 @@ run_analysis <- function(n = -1) {
 
     ## Iterate on each activity, subject and feature
     for (a in sort(levels(allData$Activity))) {
-        for (s in sort(levels(allData$Subject))) {
+        for (s in sort(as.numeric(levels(allData$Subject)))) {
             for (f in sort(features[featuresMeanStd])) {
                 ## Select the records that match the activity and subject
                 selectedRecords <- allData[allData$Subject == s & allData$Activity == a, ]
 
                 ## save the selection criteria in each component
                 activities <- c(activities, gsub("_", " ", a))
-                subjects <- c(subjects, as.numeric(s))
+                subjects <- c(subjects, s)
                 measures <- c(measures, gsub("\\.", " ", f))
 
                 ## save the average of the feature in its own component
