@@ -134,6 +134,6 @@ run_analysis <- function() {
         }
     }
 
-    ## Generate the resulting data frame, from the selected/calculated data
-    write.csv(data.frame(Activity = activities, Subject = subjects, Measure = measures, Average = averages), "tidy_measures.csv", row.names = FALSE)
+    ## Generate the resulting data frame and destination file, from the selected/calculated data
+    write.table(data.frame(Activity = activities, Subject = subjects, Measure = measures, Average = averages), "tidy_measures.txt", row.names = FALSE)
 }
