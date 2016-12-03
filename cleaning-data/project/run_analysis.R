@@ -1,74 +1,138 @@
 run_analysis <- function(n = -1) {
+
+    ## ------------------------------------
+    ## Part 1: Loading and tidying features
+    ## ------------------------------------
+
+    ## Load the features.txt file into "features" to have the list of features to select from
+    ## It has a single value per line, so it's possible to get a vector of them by using function "readLines"
     conFeatures <- file("UCI_HAR_Dataset/features.txt")
     features <- readLines(conFeatures)
     close(conFeatures)
-    remove(conFeatures)
+
+    ## Generate a boolean vector that indicates which of the features are means or standard deviations
     featuresMeanStd <- grepl("mean\\(|std\\(", features)
-    features <- as.character(lapply(features, function(f) { 
-        f <- sub("^[0-9]+ ", "", f) 
+
+    ## Tidy the feature names, for them to be easy for a human to read
+    ## I'm using "lapply" to change every record of the vector, and save the values back to "features" variable
+    ## The patterns which were chosen are the minimum set that can tidy the means and standard deviations
+    features <- as.character(lapply(features, function(f) {
+        f <- sub("^[0-9]+ ", "", f)
         f <- sub("^t", "Time.", f)
-        f <- sub("^f", "Frequency.", f) 
+        f <- sub("^f", "Frequency.", f)
         f <- sub("Acc", ".Accelerometer.", f)
         f <- sub("Gyro", ".Gyroscope.", f)
         f <- sub("Mag", "Magnitude.", f)
         f <- sub("Jerk", "Jerk.", f)
         f <- sub("\\-mean\\(\\)", "Mean", f)
         f <- sub("\\-std\\(\\)", "Standard.Deviation", f)
-        gsub("\\-", ".", f) 
+        gsub("\\-", ".", f)
     }))
-    
-    widths <- as.numeric(lapply(featuresMeanStd, function(x) { if (x) { 16 } else { -16 }}))
-    
+
+    ## Generate a vector of widths to use when reading training data
+    ## The "read.fwf" function accept a width parameter with the size of each field to be read
+    ## If positive value, the field is read; if negative value, the field is discarded
+    ## All fields in "train_X.txt" and "test_X.txt" are 16 characters long; selection is made on the mean and standard deviation features
+    ## With this, we can later improve the performance of the "read.fwf" function calls
+    widths <- as.numeric(lapply(featuresMeanStd, function(isMeanOrStd) { if (isMeanOrStd) { 16 } else { -16 }}))
+
+    ## --------------------------------------
+    ## Part 2: Loading and tidying activities
+    ## --------------------------------------
+
+    ## Load the activity_labels.txt file into "activities" to have the list of activities done by the subjects
+    ## It has a single value per line, so it's possible to get a vector of them by using function "readLines"
+    ## Take out the numbers from the beginning of the labels; we won't need them
     conActivities <- file("UCI_HAR_Dataset/activity_labels.txt")
     activities <- readLines(conActivities)
     activities <- as.character(lapply(activities, function(x) { sub("^[0-9]+ ", "", x) }))
     close(conActivities)
-    remove(conActivities)
-    
+
+    ## --------------------------------------
+    ## Part 3: Loading and tidying train data
+    ## --------------------------------------
+
+    ## Load the train/subject_train.txt file into "Subject" to have the list of subjects per train record
+    ## It has a single value per line, so it's possible to get a vector of them by using function "readLines"
     conSubjectTrain <- file("UCI_HAR_Dataset/train/subject_train.txt")
     Subject <- readLines(conSubjectTrain, n = n)
     close(conSubjectTrain)
-    remove(conSubjectTrain)
+
+    ## Load the train/y_train.txt file into "Activity" to have the list of activities per train record
+    ## It has a single value per line, so it's possible to get a vector of them by using function "readLines"
+    ## Use the activities vector to translate the activity numbers into their correspondent labels
     conTrainY <- file("UCI_HAR_Dataset/train/y_train.txt")
     Activity <- readLines(conTrainY, n = n)
     Activity <- as.character(lapply(Activity, function(x) { activities[as.numeric(x)] }))
     close(conTrainY)
-    remove(conTrainY)
+
+    ## Load the train/X_train.txt file into a data frame, selecting features data using the widths vector and naming the columns according to features/featuresMeanStd vectors
+    ## Bind the Subject and Activity vectors as columns, as they are additional data about the records read into the data frame
     dfTrain <- read.fwf("UCI_HAR_Dataset/train/X_train.txt", widths = widths, col.names = features[featuresMeanStd], header = FALSE, n = n)
     dfTrain <- cbind(dfTrain, Activity)
     dfTrain <- cbind(dfTrain, Subject)
-    
+
+    ## -------------------------------------
+    ## Part 4: Loading and tidying test data
+    ## -------------------------------------
+
+    ## Load the test/subject_test.txt file into "Subject" to have the list of subjects per test record
+    ## It has a single value per line, so it's possible to get a vector of them by using function "readLines"
     conSubjectTest <- file("UCI_HAR_Dataset/test/subject_test.txt")
     Subject <- readLines(conSubjectTest, n = n)
     close(conSubjectTest)
-    remove(conSubjectTest)
+
+    ## Load the test/y_test.txt file into "Activity" to have the list of activities per test record
+    ## It has a single value per line, so it's possible to get a vector of them by using function "readLines"
+    ## Use the activities vector to translate the activity numbers into their correspondent labels
     conTestY <- file("UCI_HAR_Dataset/test/y_test.txt")
     Activity <- readLines(conTestY, n = n)
     Activity <- as.character(lapply(Activity, function(x) { activities[as.numeric(x)] }))
     close(conTestY)
-    remove(conTestY)
+
+    ## Load the test/X_test.txt file into a data frame, selecting features data using the widths vector and naming the columns according to features/featuresMeanStd vectors
+    ## Bind the Subject and Activity vectors as columns, as they are additional data about the records read into the data frame
     dfTest <- read.fwf("UCI_HAR_Dataset/test/X_test.txt", widths = widths, col.names = features[featuresMeanStd], header = FALSE, n = n)
     dfTest <- cbind(dfTest, Activity)
     dfTest <- cbind(dfTest, Subject)
-    
+
+    ## -----------------------------------------------
+    ## Part 5: Creating a data frame with all raw data
+    ## -----------------------------------------------
+
     allData <- rbind(dfTrain, dfTest)
+    # Removing the intermediate data frames to save memory
     remove(dfTrain)
     remove(dfTest)
-    
+
+    ## -----------------------------------------------------------------------------------
+    ## Part 6: Obtaining the averages of each selected measure, by subject and by activity
+    ## -----------------------------------------------------------------------------------
+
+    ## Initialization of the components of the new data frame
     activities <- c()
     subjects <- c()
     measures <- c()
     averages <- c()
+
+    ## Iterate on each activity, subject and feature
     for (a in levels(allData$Activity)) {
         for (s in levels(allData$Subject)) {
             for (f in features[featuresMeanStd]) {
-                localData <- allData[allData$Subject == s & allData$Activity == a, ]
+                ## Select the records that match the activity and subject
+                selectedRecords <- allData[allData$Subject == s & allData$Activity == a, ]
+
+                ## save the selection criteria in each component
                 activities <- c(activities, a)
                 subjects <- c(subjects, s)
                 measures <- c(measures, f)
-                averages <- c(averages, mean(localData[, f]))
+
+                ## save the average of the feature in its own component
+                averages <- c(averages, mean(selectedRecords[, f]))
             }
         }
     }
+
+    ## Generate the resulting data frame, from the selected/calculated data
     data.frame(Activity = activities, Subject = subjects, Measure = measures, Average = averages)
 }
