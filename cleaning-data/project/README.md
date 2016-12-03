@@ -12,7 +12,7 @@ refered to as "subjects".
 
 The source file *run_analysis.R* contain a R function with the same name, that takes no parameters. It collects the raw data 
 contained into several files inside the *UCI_HAR_Dataset* folder, applies some operations on them and generate as output a file
-named *tidy_measures.csv*. 
+named *tidy_measures.txt*. 
 
 The algorithm divides the task in different phases: 
   - Reading the features label file, selecting labels related to means and standard deviations and tidying its information
@@ -84,11 +84,11 @@ With those rows, calculate the average of all measures and organize a new data f
 The resulting data table was designed for being not sparse, so it has a simple structure to be very clear and condensed. 
 The chosen structure seems like a fact table from a data warehouse star modelling: three dimension columns (activity, subject
 and name of the measured feature) and one value (average). After running the algorigthm, the resulting table is written as a 
-CSV file, *tidy_measures.csv*, which is also commited in this repository. 
+TXT file, *tidy_measures.txt*, which is also commited in this repository. 
 
 To reload it in RStudio, it is enough to issue the command: 
 
 ```r
-tm <- read.csv("tidy_measures.csv")
+tm <- read.table("tidy_measures.txt", header = TRUE)
 ```
 
