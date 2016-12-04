@@ -70,8 +70,7 @@ run_analysis <- function() {
     ## Load the train/X_train.txt file into a data frame, selecting features data using the widths vector and naming the columns according to features/featuresMeanStd vectors
     ## Bind the Subject and Activity vectors as columns, as they are additional data about the records read into the data frame
     dfTrain <- read.fwf("UCI_HAR_Dataset/train/X_train.txt", widths = widths, col.names = features[featuresMeanStd], header = FALSE)
-    dfTrain <- cbind(dfTrain, Activity)
-    dfTrain <- cbind(dfTrain, Subject)
+    dfTrain <- cbind(Activity, Subject, dfTrain)
 
     ## -------------------------------------
     ## Part 4: Loading and tidying test data
@@ -94,15 +93,14 @@ run_analysis <- function() {
     ## Load the test/X_test.txt file into a data frame, selecting features data using the widths vector and naming the columns according to features/featuresMeanStd vectors
     ## Bind the Subject and Activity vectors as columns, as they are additional data about the records read into the data frame
     dfTest <- read.fwf("UCI_HAR_Dataset/test/X_test.txt", widths = widths, col.names = features[featuresMeanStd], header = FALSE)
-    dfTest <- cbind(dfTest, Activity)
-    dfTest <- cbind(dfTest, Subject)
+    dfTest <- cbind(Activity, Subject, dfTest)
 
     ## -----------------------------------------------
     ## Part 5: Creating a data frame with all raw data
     ## -----------------------------------------------
 
     allData <- rbind(dfTrain, dfTest)
-    # Removing the intermediate data frames to save memory
+    ## Removing the intermediate data frames to save memory
     remove(dfTrain)
     remove(dfTest)
 
@@ -110,30 +108,10 @@ run_analysis <- function() {
     ## Part 6: Obtaining the averages of each selected measure, by subject and by activity
     ## -----------------------------------------------------------------------------------
 
-    ## Initialization of the components of the new data frame
-    activities <- c()
-    subjects <- c()
-    measures <- c()
-    averages <- c()
-
-    ## Iterate on each activity, subject and feature
-    for (a in sort(levels(allData$Activity))) {
-        for (s in sort(as.numeric(levels(allData$Subject)))) {
-            for (f in sort(features[featuresMeanStd])) {
-                ## Select the records that match the activity and subject
-                selectedRecords <- allData[allData$Subject == s & allData$Activity == a, ]
-
-                ## save the selection criteria in each component
-                activities <- c(activities, gsub("_", " ", a))
-                subjects <- c(subjects, s)
-                measures <- c(measures, gsub("\\.", " ", f))
-
-                ## save the average of the feature in its own component
-                averages <- c(averages, mean(selectedRecords[, f]))
-            }
-        }
-    }
-
-    ## Generate the resulting data frame and destination file, from the selected/calculated data
-    write.table(data.frame(Activity = activities, Subject = subjects, Measure = measures, Average = averages), "tidy_measures.txt", row.names = FALSE)
+    ## Making the aggregation of measurement columns, by activity and subject, using function "mean"
+    result <- aggregate(allData[,3:ncol(allData)], by=list(allData$Activity, allData$Subject), FUN = mean)
+    ## Fix the column names after applying the aggregate function
+    colnames(result) <- c("Activity", "Subject", names(allData[3:ncol(allData)]))
+    ## Saving the resulting data frame into a file
+    write.table(result, "tidy_measures.txt", row.names = FALSE)
 }
