@@ -23,7 +23,6 @@ The algorithm divides the task in different phases:
   - By analysing the raw data and grouping it by subjects, activities and feature measures, generate a new data set with: 
     - Activity performed
     - Subject who performed the activity
-    - Name of the measured feature
     - Average of the measurement records collected from the subject while performing the activity
     
 #### Phase 1: Features
@@ -79,12 +78,8 @@ to the activities and subjects.
 
 #### Phase 6: Calculating derived average from the different measures
 
-With the raw data frame built, it is time to iterate on it to select the rows that share the same activity and subject. 
-With those rows, calculate the average of all measures and organize a new data frame with the clean and tidy data. 
-The resulting data table was designed for being not sparse, so it has a simple structure to be very clear and condensed. 
-The chosen structure seems like a fact table from a data warehouse star modelling: three dimension columns (activity, subject
-and name of the measured feature) and one value (average). After running the algorigthm, the resulting table is written as a 
-TXT file, *tidy_measures.txt*, which is also commited in this repository. 
+With the raw data frame built, it is time to run the aggregate function for making the resulting data set. 
+After running the algorigthm, the resulting table is written as a TXT file, *tidy_measures.txt*, which is also commited in this repository. 
 
 To reload it in RStudio, it is enough to issue the command: 
 
