@@ -1,3 +1,17 @@
+# Question: Of the four types of sources indicated by the type (point, nonpoint, onroad, nonroad) variable, which of 
+# these four sources have seen decreases in emissions from 1999–2008 for Baltimore City? Which have seen increases in 
+# emissions from 1999–2008? 
+# 
+# Use the ggplot2 plotting system to make a plot answer this question.
+#
+# Strategy: 
+# 0. Prior analysis has showed that the data does not contain NAs, and are already loaded with the correct classes
+# 1. Create a data frame with the consolidated sum of all emission per year, with filtering to the Baltimore fips and the type variable
+# 2. Plot the graph to see if the emissions have decreased/increased from 1999 to 2008
+# 
+# Conclusion: Point type was the only one to increase; the others decreased, with highlight to non-point type.
+#
+
 library(ggplot2)
 source("setup.R")
 

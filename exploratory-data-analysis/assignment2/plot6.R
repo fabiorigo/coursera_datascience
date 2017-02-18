@@ -1,3 +1,17 @@
+# Question: Compare emissions from motor vehicle sources in Baltimore City with emissions from motor vehicle sources 
+# in Los Angeles County, California (fips == "06037"). 
+# Which city has seen greater changes over time in motor vehicle emissions?
+#
+# Strategy: 
+# 0. Prior analysis has showed that the data does not contain NAs, and are already loaded with the correct classes
+# 1. Select the SCC codes of the vehicle related sources; the codes selected were the ones in which the word "Vehicle" appears at the short name
+# 2. Create a data frame with the consolidated sum of all emission per year, with filtering to the vehicle related SCC Codes, the Los Angeles fips and Baltimore fips
+# 3. Plot the graphs side by side, with the standardized axis limits, to see what were the changes from 1999 to 2008
+# 
+# Conclusion: Los Angeles has a much higher level of PM2.5 as compared to Baltimore. But they tend to get closer, as the rate of
+# decrease of LA is much bigger than the one of Baltimore. 
+#
+
 source("setup.R")
 
 vehicleSCC <- SCC[grep("[Vv]ehicle", SCC$Short.Name), 1]
