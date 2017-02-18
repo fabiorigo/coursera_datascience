@@ -1,2 +1,3 @@
 # coursera_datascience
-Repository created during the Coursera course: Data Scientist Toolbox
+
+Repository containing all resources and activities done while taking the Coursera Specialization "Data Science", by University John Hopkins
