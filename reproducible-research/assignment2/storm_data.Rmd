@@ -115,3 +115,31 @@ With the two last datasets, the analysis follows to its results.
 
 ## Results
 
+Due to the high amount of types of events, which mostly do not have enough significance, it will be always selected the most relevant events for each result presented. 
+
+### Public health
+
+For the analysis in terms of public health, it is selected the event types that produced more than 1000 victims, considering both fatalities and injuries. 
+
+```{r public_health_rank}
+h1000 <- healthPerEvent[healthPerEvent$SUM > 1000, ]
+mp <- barplot(h1000$SUM, horiz = T, main = "Events that Mostly Contribute to Public Health Problems", xlab = "Fatalities / Injuries", ylab = "Storm Event")
+text(3, mp, labels = h1000$EVTYPE, pos = 4, col = "blue")
+```
+
+From the plot above, it is evident that **tornados** are the most serious type of storm event to cause harm to people, to which authorities should concentrate their actions. 
+
+
+### Economic Problems
+
+For the analysis in terms of economic problems, it is selected the event types that caused more than US$ 5 Billion in losses, considering both property and crop damages. 
+
+```{r economic_rank}
+e1B <- damagePerEvent[damagePerEvent$SUM > 5000000000, ]
+e1B$SUM2 <- e1B$SUM / 1000000000
+mp <- barplot(e1B$SUM2, horiz = T, main = "Events that Mostly Contribute to Economic Problems", xlab = "Billion Dollars", ylab = "Storm Event")
+text(3, mp, labels = e1B$EVTYPE, pos = 4, col = "blue")
+```
+
+From the plot above, it is evident that **floods** are the most serious type of storm event to cause economic losses, to which authorities should concentrate their actions. 
+
