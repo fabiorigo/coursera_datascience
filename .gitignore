@@ -1,3 +1,7 @@
 **/.RData
 **/.Rhistory
+**/*.md
+**/*_data_cache
+**/*.bz2
+**/*.html
 

@@ -1,0 +1,117 @@
+---
+title: "Analysis on the Effects of Storms on Human Health and Economy"
+author: "Fabio Rigo"
+date: "April 22nd 2017"
+output: html_document
+---
+
+## Synopsis
+
+Storms and other strong weather events are proven to cause both public health and economic problems. In United States of America, storm related data is collected and organized by the *U.S. National Oceanic and Atmospheric Administration (NOAA)*. It can be used to guide government actions toward prevention or mitigation of effect of storms throughout the country. 
+
+In this study, data from NOAA database is organized in such a way that it is possible to identify which storm types contribute the most for public health or economic problems. The original file, with 46MB, contain information since 1950's, and can be obtained from [here](https://d396qusza40orc.cloudfront.net/repdata%2Fdata%2FStormData.csv.bz2). The analysis does not focus on dates, but on total events registered since the start of data collection. 
+
+In the first part, it is shown how the original data was cleaned for analysis. In the second, the results or the study are presented.  
+
+## Data Processing
+
+Data should be obtained from the source if it is not still downloaded. Using R, we can assure it is always present for processing. 
+
+```{r download}
+url <- "https://d396qusza40orc.cloudfront.net/repdata%2Fdata%2FStormData.csv.bz2"
+filename <- "storm_data.csv.bz2"
+if (!file.exists(filename)) {
+    download.file(url, filename, method = "curl")
+}
+```
+
+Due to the amount of information present in the file, one should analyze what are the important ones to load. One way to do this, is to analyze by column names. This shows that it's possible to filter most information within the file, selecting only 7 columns for reading to memory: the columns named **EVTYPE**, **FATALITIES**, **INJURIES**, **PROPDMG**, **PROPDMGEXP**, **CROPDMG** and **CROPDMGEXP**. They are the relevant ones for this study. 
+
+```{r exploratory_analysis}
+exploratoryDF <- read.csv(filename, nrows = 1)
+names(exploratoryDF)
+columnSelector <- c("NULL", "NULL", "NULL", "NULL", "NULL", "NULL", "NULL", NA, "NULL", "NULL", "NULL", "NULL", "NULL", "NULL", "NULL", "NULL", "NULL", "NULL", "NULL", "NULL", "NULL", "NULL", NA, NA, NA, NA, NA, NA, "NULL", "NULL", "NULL", "NULL", "NULL", "NULL", "NULL", "NULL", "NULL")
+```
+
+As a next step, the storm data is read. As it can take long, it is advisable to cache the result of this processing.
+
+It is important to notice that the financial information related to property and crop damage are compound by a numerator and a multiplier. The multiplier columns (**PROPDMGEXP** and **CROPDMGEXP**) can have values **K** (meaning *thousands*), **M** (meaning *millions*) and **B** (meaning *billions*). This will demand an aditional treatment of the data, so that it is possible to compare numbers in the same scale. 
+
+```{r read_csv, cache = TRUE} 
+rawStormData <- read.csv(filename, colClasses = columnSelector)
+
+fn <- function(m) {
+    if (m == "K") { 1000 } 
+    else if (m == "M" | m == "m") { 1000000 } 
+    else if (m == "B") { 1000000000 }
+    else { 1 }
+}
+
+stormData <- cbind(
+    # This adds the EVTYPE, FATALITIES, INJURIES columns to the storm data frame "as is"
+    rawStormData[, 1:3], 
+    # This generates a numeric property damage column, by applying the function that translates K, M, B to 1000, 1000000, 1000000000 at all records
+    rawStormData[,4] * vapply(rawStormData[,5], fn, FUN.VALUE = 1), 
+    # This generates a numeric crop damage column, by applying the function that translates K, M, B to 1000, 1000000, 1000000000 at all records
+    rawStormData[,6] * vapply(rawStormData[,7], fn, FUN.VALUE = 1))
+
+names(stormData) <- c("EVTYPE", "FATALITIES", "INJURIES", "PROPDMG", "CROPDMG")
+head(stormData)
+```
+
+```{r memory_cleanup_1, echo = FALSE}
+remove(exploratoryDF)
+remove(columnSelector)
+remove(rawStormData)
+```
+
+By now, in the **stormData** data frame is kept all data needed for aggregation. Those are views on the original data. 
+
+```{r view_stormData}
+dim(stormData)
+summary(stormData$EVTYPE)
+```
+
+It exists **902297** storm records in the dataset, with several types of event. *The most proeminent events have tens or hundreds of records, which gives a pretty good statistic support for the analysis.* 
+
+The study focuses on types of event, so all aggregations will be done in terms of **EVTYPE** variable, using *SUM* as aggregation function. For the purpose of this study, which is to compare types of events given the health/economic parameters, regardless of other variables like dates, a simple sum will be sufficient. 
+
+```{r aggregation} 
+aggregationPerEvent <- aggregate(.~EVTYPE, stormData, sum)
+summary(aggregationPerEvent)
+```
+
+Two new data frames are created: *healthPerEvent* for the public health part of the analysis; and *damagePerEvent* for the economic problems part of the analysis. 
+
+As before, *fatalities* and *injuries* are summed to create a rank of public health problems. *Property damage* and *crop damage* are also summed to create a rank of economic problems. 
+
+Finally, both data sets are ordered in **desc** order, to have in the first lines the most relevant events in terms of health and economy. 
+
+```{r final_datasets} 
+healthPerEvent <- aggregationPerEvent[aggregationPerEvent$FATALITIES > 0 | aggregationPerEvent$INJURIES > 0, 1:3]
+healthPerEvent <- cbind(healthPerEvent, apply(healthPerEvent[,2:3], 1, sum))
+names(healthPerEvent) <- c("EVTYPE", "FATALITIES", "INJURIES", "SUM")
+attach(healthPerEvent)
+healthPerEvent <- healthPerEvent[order(-SUM),]
+detach(healthPerEvent)
+head(healthPerEvent)
+
+damagePerEvent <- aggregationPerEvent[aggregationPerEvent$PROPDMG > 0 | aggregationPerEvent$CROPDMG > 0, c(1, 4, 5)]
+damagePerEvent <- cbind(damagePerEvent, apply(damagePerEvent[,2:3], 1, sum))
+names(damagePerEvent) <- c("EVTYPE", "PROPDMG", "CROPDMG", "SUM")
+attach(damagePerEvent)
+damagePerEvent <- damagePerEvent[order(-SUM),]
+detach(damagePerEvent)
+head(damagePerEvent)
+```
+
+```{r memory_cleanup_2, echo = FALSE}
+remove(stormData)
+remove(aggregationPerEvent)
+```
+
+With the two last datasets, the analysis follows to its results. 
+
+
+## Results
+
