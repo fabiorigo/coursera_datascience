@@ -2,6 +2,10 @@
 **/.Rhistory
 **/*.md
 **/*_data_cache
+**/*_data_files
 **/*.bz2
 **/*.html
+**/rsconnect
+**/*.log
+**/*.pdf
 

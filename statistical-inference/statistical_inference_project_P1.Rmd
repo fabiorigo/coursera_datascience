@@ -1,0 +1,85 @@
+---
+title: "Simulation Exercise (Project, first part)"
+author: "Fabio Rigo"
+date: "April 26th, 2017"
+output: pdf_document
+---
+
+## Overview
+
+This report is done on a simulation exercise with exponential distributions. In here, it will be shown that exponential distributions follow the Central Limit Theorem, what means, if the average is calculated on a certain amount of random variables which follow that distribution, and this is done over and over again, the averages will follow themselves a normal distribution. 
+
+## Simulations
+
+As simulation, it will be generated 1000 different distributions of 40 random variables following an exponential distribution. The parameter *lambda*, which controls the exponential distribution, will be set to **lambda=0.2**. Theorically, the mean and standard deviation of the averages in an exponential distribution are both *1/lambda*. 
+
+The discrete values are organized in a matrix (*distributions*), in which each row correspond to a distribution of 40 values. The matrix will, therefore, have 1000 rows and 40 columns. 
+
+The means are organized in a vector (*means*). 
+
+```{r}
+set.seed(1234567890)
+B <- 1000
+n <- 40
+lambda <- 0.2
+distributions <- matrix(rexp(n * B, lambda), B, n)
+means <- apply(distributions, 1, mean)
+```
+
+
+## Sample Mean vs. Theoretical Mean
+
+As stated, if this is a exponential distribution, one should expect that the average mean will be close to *mean=1/lambda*, and as it was used **lambda=0.2**, the theoretical **mean=5**. This hypotesis is checked with a simple calculation:  
+
+```{r}
+sampleMean <- mean(distributions)
+sampleMean
+```
+
+It is confirmed the hypotesis, as the actual sample mean equals **4.995274**. 
+
+
+## Sample Variance vs. Theoretical Variance
+
+As also stated, if this is a exponential distribution, one should expect that the standard deviation of the distributions will be close to *sd=1/lambda*, and as it was used **lambda=0.2**, the theoretical standard deviation **sd=5**. This hypotesis is checked with a simple calculation too: 
+
+```{r}
+sampleStandardDeviation <- sd(distributions)
+sampleStandardDeviation
+```
+
+The actual sample standard deviation equals **5.028877**. 
+
+The variance is a function of the standard deviation only, so it is proven that the hypotesis is correct by extension. 
+
+
+## Distribution
+
+The Central Limit Theorem states about the normality of random variable **averages** when the distributions are sampled over and over again. It is very important to differentiate the distributions themselves from their averages. 
+
+For example, if the frequency of values of this simulated exponential distribution is ploted in a histogram, it is possible to see that they indeed follow a exponential function, what means that the low values frequency is much higher as compared with high values frequency. This type of curve is what we expect from random variables distributed exponentially: 
+
+```{r}
+hist(distributions, 
+     col = "light green", 
+     main = "Random Variables Distribution Following an Exponential Function", 
+     xlab = "Value of Random Variable", 
+     breaks = 30)
+```
+
+On the other hand, if the frequency of the **means** is plotted in a histogram, as the Central Limit Theorem states, it will be possible to see a normal distribution centered around the average mean (**mean=4.995274**)
+
+```{r}
+hist(means, 
+     col = "light blue", 
+     main = "Averages Distribution of Many Exponential Distributions", 
+     xlab = "Average of a Distribution", 
+     breaks = 30)
+```
+
+
+## Conclusion
+
+According to the result of the simulation, the exponential distributions seem to follow the Central Limit Theorem. 
+
+
