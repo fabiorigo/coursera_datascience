@@ -9,13 +9,15 @@ output: html_document
 
 Storms and other strong weather events are proven to cause both public health and economic problems. In United States of America, storm related data is collected and organized by the *U.S. National Oceanic and Atmospheric Administration (NOAA)*. It can be used to guide government actions toward prevention or mitigation of effect of storms throughout the country. 
 
-In this study, data from NOAA database is organized in such a way that it is possible to identify which storm types contribute the most for public health or economic problems. The original file, with 46MB, contain information since 1950's, and can be obtained from [here](https://d396qusza40orc.cloudfront.net/repdata%2Fdata%2FStormData.csv.bz2). The analysis does not focus on dates, but on total events registered since the start of data collection. 
+In this study, data from NOAA database is organized in such a way that it is possible to identify which storm types contribute the most for public health or economic problems. The original file, with 46MB, contain information since 1950's, and can be obtained from [here](https://d396qusza40orc.cloudfront.net/repdata%2Fdata%2FStormData.csv.bz2). 
 
-In the first part, it is shown how the original data was cleaned for analysis. In the second, the results or the study are presented.  
+This analysis does not focus on dates, but on total events registered since the start of data collection. 
+
+In the first part, it is shown how the original data was cleaned for this analysis. In the second, the results or the study are presented.  
 
 ## Data Processing
 
-Data should be obtained from the source if it is not still downloaded. Using R, we can assure it is always present for processing. 
+Data must be obtained from the source if it is not yet downloaded. Using R, we can assure it is always available for processing. 
 
 ```{r download}
 url <- "https://d396qusza40orc.cloudfront.net/repdata%2Fdata%2FStormData.csv.bz2"
@@ -25,7 +27,9 @@ if (!file.exists(filename)) {
 }
 ```
 
-Due to the amount of information present in the file, one should analyze what are the important ones to load. One way to do this, is to analyze by column names. This shows that it's possible to filter most information within the file, selecting only 7 columns for reading to memory: the columns named **EVTYPE**, **FATALITIES**, **INJURIES**, **PROPDMG**, **PROPDMGEXP**, **CROPDMG** and **CROPDMGEXP**. They are the relevant ones for this study. 
+Due to the amount of information present in the file, one should choose only the important information to load. One way to do this, is to use column names. 
+
+For the purpose of this study, it's possible to filter most information within the file, selecting only 7 columns for reading to memory: the columns named **EVTYPE**, **FATALITIES**, **INJURIES**, **PROPDMG**, **PROPDMGEXP**, **CROPDMG** and **CROPDMGEXP**. 
 
 ```{r exploratory_analysis}
 exploratoryDF <- read.csv(filename, nrows = 1)
@@ -33,9 +37,9 @@ names(exploratoryDF)
 columnSelector <- c("NULL", "NULL", "NULL", "NULL", "NULL", "NULL", "NULL", NA, "NULL", "NULL", "NULL", "NULL", "NULL", "NULL", "NULL", "NULL", "NULL", "NULL", "NULL", "NULL", "NULL", "NULL", NA, NA, NA, NA, NA, NA, "NULL", "NULL", "NULL", "NULL", "NULL", "NULL", "NULL", "NULL", "NULL")
 ```
 
-As a next step, the storm data is read. As it can take long, it is advisable to cache the result of this processing.
+As a next step, the storm data is read and put into the same scale. As it can take long, it is advisable to cache the result of this processing.
 
-It is important to notice that the financial information related to property and crop damage are compound by a numerator and a multiplier. The multiplier columns (**PROPDMGEXP** and **CROPDMGEXP**) can have values **K** (meaning *thousands*), **M** (meaning *millions*) and **B** (meaning *billions*). This will demand an aditional treatment of the data, so that it is possible to compare numbers in the same scale. 
+Notice that the financial information related to property and crop damage are compound by a numerator and a multiplier. The multiplier columns (**PROPDMGEXP** and **CROPDMGEXP**) can have values **K** (meaning *thousands*), **M** (meaning *millions*) and **B** (meaning *billions*). It is demanded an aditional treatment of the data, applying multiplication according to the multiplier column, so that it is possible to compare those numbers between records in the data set. 
 
 ```{r read_csv, cache = TRUE} 
 rawStormData <- read.csv(filename, colClasses = columnSelector)
@@ -72,20 +76,16 @@ dim(stormData)
 summary(stormData$EVTYPE)
 ```
 
-It exists **902297** storm records in the dataset, with several types of event. *The most proeminent events have tens or hundreds of records, which gives a pretty good statistic support for the analysis.* 
+It exists **902297** storm records in the dataset, with several types of event. *The most proeminent events have tens or hundred thousands of records, which gives a pretty good statistic support for the analysis.* 
 
-The study focuses on types of event, so all aggregations will be done in terms of **EVTYPE** variable, using *SUM* as aggregation function. For the purpose of this study, which is to compare types of events given the health/economic parameters, regardless of other variables like dates, a simple sum will be sufficient. 
+The study focuses on types of event, so all aggregations will be done in terms of **EVTYPE** variable. For comparing types of events given the health/economic parameters, regardless of other variables like dates, a simple sum will be enough, so it is used *SUM* as aggregation function. 
 
 ```{r aggregation} 
 aggregationPerEvent <- aggregate(.~EVTYPE, stormData, sum)
 summary(aggregationPerEvent)
 ```
 
-Two new data frames are created: *healthPerEvent* for the public health part of the analysis; and *damagePerEvent* for the economic problems part of the analysis. 
-
-As before, *fatalities* and *injuries* are summed to create a rank of public health problems. *Property damage* and *crop damage* are also summed to create a rank of economic problems. 
-
-Finally, both data sets are ordered in **desc** order, to have in the first lines the most relevant events in terms of health and economy. 
+From this, two new data frames are created: *healthPerEvent* for the public health part of the analysis; and *damagePerEvent* for the economic problems part of the analysis. 
 
 ```{r final_datasets} 
 healthPerEvent <- aggregationPerEvent[aggregationPerEvent$FATALITIES > 0 | aggregationPerEvent$INJURIES > 0, 1:3]
@@ -110,6 +110,12 @@ remove(stormData)
 remove(aggregationPerEvent)
 ```
 
+As it is possible to notice from the first rows of each data set, it is not needed to apply weights to each data to rank them. That is, whatever multiplier we apply to the *fatalities* column to compare with *injuries* will lead to the same rank as if no weight is applied. This is expected, since a violent storm which is capable of producing massive deaths can also produce massive injuries. The same logic applies to damage. Moreover, it is out of scope of the study to know what is the relative importance between metrics. 
+
+So, *fatalities* and *injuries* were just summed to create a rank of public health problems. *Property damage* and *crop damage* were also just summed to create a rank of economic problems. 
+
+Finally, both data sets were ordered in **desc** order, to have in the first lines the most relevant events in terms of health and economy. 
+
 With the two last datasets, the analysis follows to its results. 
 
 
@@ -123,7 +129,7 @@ For the analysis in terms of public health, it is selected the event types that 
 
 ```{r public_health_rank}
 h1000 <- healthPerEvent[healthPerEvent$SUM > 1000, ]
-mp <- barplot(h1000$SUM, horiz = T, main = "Events that Mostly Contribute to Public Health Problems", xlab = "Fatalities / Injuries", ylab = "Storm Event")
+mp <- barplot(h1000$SUM, horiz = T, main = "Events that Mostly Contribute to Public Health Problems", xlab = "Fatalities / Injuries", ylab = "Storm Event", sub = "Figure 1: Rank of most harmful storm events for public health")
 text(3, mp, labels = h1000$EVTYPE, pos = 4, col = "blue")
 ```
 
@@ -137,7 +143,7 @@ For the analysis in terms of economic problems, it is selected the event types t
 ```{r economic_rank}
 e1B <- damagePerEvent[damagePerEvent$SUM > 5000000000, ]
 e1B$SUM2 <- e1B$SUM / 1000000000
-mp <- barplot(e1B$SUM2, horiz = T, main = "Events that Mostly Contribute to Economic Problems", xlab = "Billion Dollars", ylab = "Storm Event")
+mp <- barplot(e1B$SUM2, horiz = T, main = "Events that Mostly Contribute to Economic Problems", xlab = "Billion Dollars", ylab = "Storm Event", sub = "Figure 2: Rank of most harmful storm events for economy")
 text(3, mp, labels = e1B$EVTYPE, pos = 4, col = "blue")
 ```
 
