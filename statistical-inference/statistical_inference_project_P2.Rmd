@@ -1,7 +1,7 @@
 ---
 title: "Basic Inferential Data Analysis (Project, second part)"
 author: "Fabio Rigo"
-date: "April 26th, 2017"
+date: "May 6th, 2017"
 output: pdf_document
 ---
 
@@ -63,9 +63,9 @@ wideTG <- cbind(wideTG, tq25, tq975)
 wideTG[order(wideTG$dose, wideTG$supp), c(2, 1, 13, 14, 15, 16)]
 ```
 
-From the numbers, it is possible to see that for lower doses (0.5mg and 1mg), the supplement **VC** had worse results than supplement **OJ**. The confidence intervals do not touch, what means that with 95% confidence, OJ should be used when the treatment is less agressive. 
+From the numbers, it is possible to see that for lower doses (0.5mg and 1mg), the supplement **VC** had worse results than supplement **OJ**. The confidence intervals do not intersect, what means that with 95% confidence, OJ should be used when the treatment is less agressive. 
 
-In the case of higher doses (2mg), using only the confidence intervals it is not possible to make a conclusion. Further observation shows that OJ averages did not increase in a proportional rate to the dose, when comparing 1mg to 2mg. 
+In the case of higher doses (2mg), using only the confidence intervals it is not possible to make a conclusion. Further observation shows that OJ averages did not increase in a proportional rate to the dose, when comparing 1mg to 2mg. **However, the high variance of the data collected for VC supplement at 2mg dose suggests that if the experiment continues, by taking more samples, the confidence of the conclusion should increase.**
 
 To make the conclusion in favor of **OJ** supplement, it is needed to know with enough degree of confidence if the population means for *VC* and *OJ* at the *2mg dose* can be located on the edges of the T-confidence intervals previously calculated. Two one-sample T-tests will be done, the first considering the null hypotesis (*H0*) to be that the real population mean is located in the upper limit for **OJ** (in here, it is adopted *mu=27.5*), and the second considering the null hypotesis (*H0*) to be that the real population mean is located in the lower limit for **VC** (in here, it is adopted *mu=23*). If the null hypotesis for both tests is accepted, it's possible to make a conclusion in favor of the better efficacy of OJ for the growth of pig tooth at all dose levels. 
 
@@ -84,21 +84,6 @@ t.test(wideTG[6,3:12], mu=23)
 ```
 
 As the p-value is greater than *0.05*, we **accept the null hypotesis** of the true population mean to be equal to 23. 
-
-Is is worth to notice, however, that the data collected for **VC** with **2mg** dose has a big variance, therefore it is recommended to move on with the experiment, collecting more samples from the population, to confirm the conclusion. The effect of the high variance can be clearly seen when a population is simulated using the same means from the T-tests, but keeping the same variance from the data set: 
-
-```{r}
-set.seed(123456)
-popVC <- hist(rnorm(n=10000, mean=23, sd=4.8), xlab = "Length", col=rgb(1,0,0,1/4),
-              main = "Simulated population distribution (VC and 2mg)")
-popOJ <- hist(rnorm(n=10000, mean=27.5, sd=2.66), xlab = "Length", col=rgb(0,0,1,1/4),
-              main = "Simulated population distribution (OJ and 2mg)")
-
-plot(popVC, col=rgb(1,0,0,1/4), xlab = "Length",
-     main = "Comparison of distributions on simulated populations (2mg)")
-plot(popOJ, col=rgb(0,0,1,1/4), add=T)
-legend("topright", c("VC", "OJ"), fill=c(rgb(1,0,0,1/4), rgb(0,0,1,1/4)))
-```
 
 ## Conclusion
 
