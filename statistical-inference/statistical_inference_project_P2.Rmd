@@ -1,0 +1,111 @@
+---
+title: "Basic Inferential Data Analysis (Project, second part)"
+author: "Fabio Rigo"
+date: "April 26th, 2017"
+output: pdf_document
+---
+
+
+## Overview
+
+This basic inferential data analysis will be performed on the ToothGrowth dataset, from the R Datasets package. The dataset contains 60 observations of the effect of Vitamin C on the tooth growth on 10 Guinea Pigs. The **lengths of the tooth** were collected, keeping association with two different parameters relevant to the experiment: the **type of supplement used (one of OJ or VC)** and the **vitamin dose in milligrams (0.5mg, 1mg and 2mg)** applied to the pig. 
+
+In the first part, the data will be explored and summarized. 
+
+In the second part, some inferential hypotesis testing will be done.
+
+In the conclusion part, besides stating conclusions of the hypotesis testing, the assumptions used will be made explicit. 
+
+
+## Exploratory Data Analysis
+
+Firstly, the dataset is loaded and the first rows shown, so that it's possible to determine the structure of the data. 
+
+```{r}
+library("datasets")
+data("ToothGrowth")
+str(ToothGrowth)
+summary(ToothGrowth$supp)
+```
+
+The dataset contains numeric columns for the **length** and the **dose**. The **supp** column is a factor of two levels, each with 30 observations. 
+
+To remove redundancies and make the analysis easier, the data set will be reshaped, grouping by supplements and doses. Lastly, information of means and standard deviation per each row of the dataset are added, to finish the data cleaning process. 
+
+```{r}
+library("reshape2")
+obs <- rep(c(1:10))
+TG <- cbind(ToothGrowth, obs)
+wideTG <- dcast(TG, supp + dose ~ obs, value.var = "len")
+names(wideTG)[-(1 : 2)] <- paste("len", names(wideTG)[-(1 : 2)], sep = "")
+mean <- apply(wideTG[,3:12], 1, mean)
+sd <- apply(wideTG[,3:12], 1, sd)
+wideTG <- cbind(wideTG, mean, sd)
+wideTG[,c(1,2,13,14)]
+```
+
+## Comparison of Tooth Growth by Supplement and Dose
+
+The purpose of this analysis is check which of the two studied supplements leads has better performance. 
+
+Firstly, it is calculated T-confidence intervals of the mean for each of the six combinations. Considering that the samples of 10 measurements do not tell the precise story about the whole population, the intervals define regions where the population means are likely to be, with a confidence probability. Each combination has data from 10 pigs, so this will demand a T distribution with 9 degrees of freedom. The chosen confidence probability was 95%, with 2.5% in both tails. 
+
+After calculation, the data is embedded in the *wideTG* dataframe. 
+
+```{r}
+c95Fn <- function(row) {
+    row[1] + c(-1, 1) * qt(.975, 9) * row[2] / sqrt(10)
+}
+c95 <- t(apply(wideTG[,13:14], 1, c95Fn))
+tq25 <- c95[,1]
+tq975 <- c95[,2]
+wideTG <- cbind(wideTG, tq25, tq975)
+wideTG[order(wideTG$dose, wideTG$supp), c(2, 1, 13, 14, 15, 16)]
+```
+
+From the numbers, it is possible to see that for lower doses (0.5mg and 1mg), the supplement **VC** had worse results than supplement **OJ**. The confidence intervals do not touch, what means that with 95% confidence, OJ should be used when the treatment is less agressive. 
+
+In the case of higher doses (2mg), using only the confidence intervals it is not possible to make a conclusion. Further observation shows that OJ averages did not increase in a proportional rate to the dose, when comparing 1mg to 2mg. 
+
+To make the conclusion in favor of **OJ** supplement, it is needed to know with enough degree of confidence if the population means for *VC* and *OJ* at the *2mg dose* can be located on the edges of the T-confidence intervals previously calculated. Two one-sample T-tests will be done, the first considering the null hypotesis (*H0*) to be that the real population mean is located in the upper limit for **OJ** (in here, it is adopted *mu=27.5*), and the second considering the null hypotesis (*H0*) to be that the real population mean is located in the lower limit for **VC** (in here, it is adopted *mu=23*). If the null hypotesis for both tests is accepted, it's possible to make a conclusion in favor of the better efficacy of OJ for the growth of pig tooth at all dose levels. 
+
+Starting with the sample for **OJ** supplement at **2mg** dose: 
+
+```{r}
+t.test(wideTG[3,3:12], mu=27.5)
+```
+
+As the p-value is greater than *0.05*, we **accept the null hypotesis** of the true population mean to be equal to 27.5. 
+
+Following with the sample for **VC** supplement at **2mg** dose: 
+
+```{r}
+t.test(wideTG[6,3:12], mu=23)
+```
+
+As the p-value is greater than *0.05*, we **accept the null hypotesis** of the true population mean to be equal to 23. 
+
+Is is worth to notice, however, that the data collected for **VC** with **2mg** dose has a big variance, therefore it is recommended to move on with the experiment, collecting more samples from the population, to confirm the conclusion. The effect of the high variance can be clearly seen when a population is simulated using the same means from the T-tests, but keeping the same variance from the data set: 
+
+```{r}
+set.seed(123456)
+popVC <- hist(rnorm(n=10000, mean=23, sd=4.8), xlab = "Length", col=rgb(1,0,0,1/4),
+              main = "Simulated population distribution (VC and 2mg)")
+popOJ <- hist(rnorm(n=10000, mean=27.5, sd=2.66), xlab = "Length", col=rgb(0,0,1,1/4),
+              main = "Simulated population distribution (OJ and 2mg)")
+
+plot(popVC, col=rgb(1,0,0,1/4), xlab = "Length",
+     main = "Comparison of distributions on simulated populations (2mg)")
+plot(popOJ, col=rgb(0,0,1,1/4), add=T)
+legend("topright", c("VC", "OJ"), fill=c(rgb(1,0,0,1/4), rgb(0,0,1,1/4)))
+```
+
+## Conclusion
+
+From the data analysed, it is possible to conclude that the supplement **OJ** has better efficacy over **VC** on the tooth growth rate on doses up to *1mg*. 
+
+With a *2mg* dose, there are evidences that the conclusion continues to apply, but to confirm it, it is needed to extend the experiment, collecting more data to reduce the variance. 
+
+To support this conclusion, it is assumed that the true population means for the *2mg* dose are located in the edges of the T-Confidence interval of 95%, as accepted from the T-tests perfomed. 
+
+
