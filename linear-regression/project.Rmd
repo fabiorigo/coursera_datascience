@@ -1,31 +1,25 @@
 ---
-title: "Impact of Automatic Transmission on Miles Per Gallon rate"
+title: "Impact of Transmission on Miles Per Gallon rate"
 author: "Fabio Scramim Rigo"
 date: "November 12th, 2017"
-output: html_document
+output:
+  html_document: default
+  word_document: default
 ---
-
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
-```
 
 ## Executive Summary
 
-This article summarizes the results and analysis of the final project, in the context of the Linear Regression course of Data Science Specialization, offered by Johns Hopkins Public Health University. 
-
-In it, Motor Trend magazine is interested to analyse the influence of the type of transmission (automatic/manual) on the fuel consumption rate of a set of cars. From the study, it concludes that automatic transmission cars perform worse than manual transmission cars in terms of fuel consumption, an automatic type being expected to have a rate of **7.245** less miles per galon than a manual type. 
+This article summarizes the results and analysis of the final project, in the context of the Linear Regression course of Data Science Specialization, offered by Johns Hopkins Public Health University. In it, Motor Trend magazine is interested to analyse the influence of the type of transmission (automatic/manual) on the fuel consumption rate of a set of cars.  
 
 ## Exploration Analysis and Model Choice
-
 
 The `mtcars` dataset contains measurements of fuel consumption and other 10 aspects of design and performance made on 32 models of cars. In regards to the a subset of the data in which Motor Trend is interested in, the exploratory analysis shows that:
 
 * The fuel consumption variable (MPG) has a real numeric range. In this study, the variable will be the outcome variable;
 * The automatic/manual transmission variable (AM) is a factor of two values. In this study, the variable will be the predictor variable; 
 * The *plot #1* from the *Appendix Section* shows that from exploratory plotting, automatic transmission is expected to lead to lower miles per gallon rates. 
-* *Binomial modelling* does **not** fit this problem because the outcome is not binary; this type of modelling is accurate for cases in which we need to predict a win/lose likelihood based on other measurements;
-* *Poisson modelling* does **not** fit this problem because it is not a temporal one. We are not evaluating a rate which depends on observation through time; 
-* *Linear modelling* fits the problem, because the dataset can be splitted in two parts around the predictor factor variable, and each part can be considered as a distribution around a mean with a residual. 
+* *Binomial modelling* and *Poisson modelling* do **not** fit this problem, the first because the outcome is not binary; this type of modelling is accurate for cases in which we need to predict a win/lose likelihood based on other measurements; the second because it is not a temporal problem. We are not evaluating a rate which depends on observation through time; 
+* *Linear modelling* fits the problem, because for each factor it can be considered as a distribution around a mean with a residual. 
 
 
 ## Applying the Model
@@ -38,34 +32,21 @@ fit <- lm(mtcars$mpg ~ f - 1)
 summary(fit)
 ```
 
-From the summary of the linear fit, we confirm the distributions around the means which could be seen in the exploratory analysis plot #1. This is, the estimated "Miles per Gallon" rate for the Automatic cars is **17.147**, which matches what is possible to see in the plot. At the same time, the estimated "Miles per Gallon" rate for Manual cars is **24.392**, which is not far from the mean we can see graphically. 
-
-To have a comparactive view, we may not exclude the intercept from the modelling: 
+From the summary of the linear fit, we confirm the distributions around the means which could be seen in the exploratory analysis plot #1. This is, the estimated "Miles per Gallon" rate for the Automatic cars is **17.147** and for Manual cars is **24.392**, which matches what is possible to see in the plot. To have a comparactive view, we may not exclude the intercept from the modelling: 
 
 ```{r lm_with_intercept}
-fit2 <- lm(mtcars$mpg ~ f)
-summary(fit2)
+lm(mtcars$mpg ~ f)$coefficients
 ```
 
-In here, it is possible to see that cars with Manual transmission are expected to have on average **7.245** more MPG than a car with Automatic transmission. 
-
-Whereas from the Stardard Error and P Value measurements it is possible to infer that an alternative hypotesis would fail to exclude this one in a hypotesis testing (and so, the confidence rate is high), let's express this by quantifying the uncertainty and making a residual analysis to confirm the assumption. 
-
-The confidence interval is calculated for the two factors: 
+In here, it is possible to see that cars with Manual transmission are expected to have on average **7.245** more MPG than a car with Automatic transmission. From the Stardard Error and P Value measurements it is possible to infer that the result has high confidence. Even so, let's quantify the uncertainty and making a residual analysis to confirm the assumption. 
 
 ```{r confidence}
 confint(fit)
 ```
 
-There is no intersection between the two confidence intervals, what leads to the conclusion that the transmission type defines two well defined regions. Still, there are some outlier points that can lead to misinterpretation. We must then interpret the residuals to discover the nature of those ouliers. 
-
-The *plot #2* from the *Appendix Section* shows that residuals have low leverage (in the range **0.05 ~ 0.08**), what means, they have little power to cause noise on the calculated linear fit. That indicates that most dots are located close to each other in the distribution, and for the dots which are not, they are located in regions that have low impact and do not change the overall result substantially. 
-
-
+There is no intersection between the two confidence intervals, what means that the transmission type defines two well defined regions. Still, there are some outlier points, and we should interpret the residuals to discover the nature of those ouliers. More, the *plot #2* from the *Appendix Section* shows that residuals have low leverage (in the range **0.05 ~ 0.08**), what means, they have little power to cause noise on the calculated linear fit and are located in regions that have low impact and do not change the overall result substantially. 
 
 ## Conclusion
-
-Given all analysis, including exploration analysis, linear regression model analysis and residuals analysis, it is possible to conclude that: 
 
 * **Automatic transmission leads to a worse fuel consumption rate when compared with manual transmission**;
 * The fuel consumption rate for an automatic transmission car is expected to be **7.245 MpG less** than for an manual transmission car. 
